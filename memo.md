@@ -35,7 +35,27 @@
 5. **音声スペクトログラム**: 音声ファイルのスペクトログラムで文字や画像を表現
 
 ### プログラミング要素
-この部分は保留
+- **Pythonスクリプトの謎**
+  ```python
+  # hint.py
+  def decode_message(key):
+      if key == hashlib.sha256(b"alexchen").hexdigest()[:8]:
+          return base64.b64decode("VGhlIHRydXRoIGlzIGRpc3RyaWJ1dGVk")
+      return "Access Denied"
+  ```
+
+- **JavaScriptの難読化**
+  ```javascript
+  // 難読化されたコードにヒントを埋め込む
+  eval(atob('Y29uc29sZS5sb2coIlByb3RvY29sIFNldmVuIik='));
+  ```
+
+- **SQLインジェクションの原理を利用**
+  ```sql
+  -- 意図的に脆弱なクエリを作成
+  -- username: admin' OR '1'='1
+  -- 正しい入力でProtocol Sevenの情報を返す
+  ```
 
 ### セキュリティ概念の活用
 - SQLインジェクションの原理を使った謎解き
@@ -44,10 +64,25 @@
 - ハッシュの衝突を利用した仕掛け
 
 ### ストーリーとの連携
-- Project Aegisの内部システムへのアクセス
-- 敵組織との駆け引き
-- タイムリミットの演出（リアルタイムイベント）
-- 複数のエンディング（選択によって変わる）
+- **Project Aegisの内部システムへのアクセス**
+  - Network Segment 7への侵入シミュレーション
+  - セキュリティクリアランスレベルの段階的上昇
+  - AegisOSのコマンドラインインターフェース
+
+- **敵組織との駆け引き**
+  - Shadow Collectiveからの偽装メッセージ
+  - Cipher、Zero、Ghostからの暗号化された通信
+  - 主流派と過激派の対立を利用
+
+- **タイムリミットの演出**
+  - 72時間のカウントダウン
+  - 特定の時刻にのみアクセス可能な情報
+  - リアルタイムで変化するヒント
+
+- **複数のエンディング**
+  1. **真実公表ルート**: 世界に混乱をもたらすが新秩序を構築
+  2. **現状維持ルート**: 偽りの平和を継続
+  3. **第三の道ルート**: Digital Knightsの誕生
 
 ## 実装上の注意点
 
@@ -67,12 +102,32 @@
 
 ## 今後の検討事項
 
-### 問題の流れ
-1. コミットメッセージから最初の暗号を発見
-2. 複数の暗号を解いてURLやIPアドレスを特定
-3. 特定のサーバーにアクセスして次のヒントを取得
-4. セキュリティの知識を使って侵入を模擬
-5. 最終的に真実にたどり着く
+### 問題の流れ（改訂版）
+
+**Phase 1: 初期接触**
+1. GitHubリポジトリ`alexchen-security/project-aegis-logs`を発見
+2. 最後のコミットメッセージが暗号化されている
+3. ROT13で復号 → 次のヒントへ
+
+**Phase 2: ネットワーク侵入**
+4. IPアドレス `10.47.7.13` ポート31337にアクセス
+5. 特定のヘッダーが必要 `X-Project-Aegis: true`
+6. DNS TXTレコードからBase64データ取得
+
+**Phase 3: 暗号解読**
+7. 画像ファイルにステガノグラフィー
+8. XOR暗号で保護されたバイナリ
+9. JWTトークンのペイロードに次の指示
+
+**Phase 4: セキュリティチャレンジ**
+10. SQLインジェクションを使った情報収集
+11. XSS脆弱性を利用したコード実行
+12. Protocol Sevenの7層構造を理解
+
+**Phase 5: 最終選択**
+13. 3つの選択肢から1つを選択
+14. GitHub PRで答えを提出
+15. 選択に応じたエンディング
 
 ### 追加アイデア
 - ARを使った現実世界との連携
@@ -108,10 +163,41 @@
 5. **最終層**: すべての手がかりを統合して真実を明らかに
 
 ### 技術的実装のポイント
-- Dockerコンテナで隔離された環境を提供
-- 実際のgitリポジトリを使用
-- 簡易的なWebアプリケーションで脆弱性を実装
-- 時限要素を含むリアルタイム性
+
+**インフラ構成**:
+- **Docker Compose**で全体環境を管理
+  ```yaml
+  version: '3.8'
+  services:
+    web:
+      build: ./web
+      ports:
+        - "31337:80"
+    db:
+      image: mysql:8.0
+      environment:
+        MYSQL_ROOT_PASSWORD: protocolseven
+  ```
+
+- **GitHub Actions**で自動検証
+  ```yaml
+  name: Verify Answer
+  on:
+    pull_request:
+      branches: [ main ]
+  jobs:
+    verify:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Check answer format
+          run: ./scripts/verify_answer.sh
+  ```
+
+- **リアルタイム要素**
+  - WebSocketで時間同期
+  - Redisでセッション管理
+  - 時限式トークンの発行
 
 ### エンディングの構想
 - マルチエンディング：プレイヤーの選択により結末が変化
@@ -432,9 +518,71 @@ def leave_legacy():
     
     return "The game has just begun"
 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Filename: final_legacy.py
+# Author: A.C.
+# Date: 2025-06-13 14:00:00 UTC
+# Location: 37.7749°N, 122.4194°W
+
+import hashlib
+import base64
+import json
+from datetime import datetime, timedelta
+
+def leave_legacy():
+    """
+    This is not just code.
+    This is my testament.
+    This is my hope.
+    """
+    
+    # Layer 1: For those who seek
+    truth_fragments = distribute_knowledge(
+        locations=['github', 'dns_txt', 'ipfs', 'blockchain'],
+        encryption='AES-256-GCM',
+        fragmentation='shamir_secret_sharing'
+    )
+    
+    # Layer 2: For those who understand  
+    ethical_gates = create_moral_checkpoints(
+        questions=[
+            "What is more important: order or freedom?",
+            "Can the ends justify the means?", 
+            "Who watches the watchers?"
+        ],
+        time_limit=timedelta(hours=72)
+    )
+    
+    # Layer 3: For those who care
+    emotional_keys = embed_humanity_test(
+        memories=['kevin_wang_incident', 'moms_cipher_lessons'],
+        empathy_threshold=0.7
+    )
+    
+    # Layer 4: For those who choose
+    final_decision = await_the_worthy(
+        choices=['expose', 'maintain', 'transcend'],
+        consequences='irrevocable'
+    )
+    
+    # Layer 5: The hidden layer
+    if datetime.utcnow() > datetime(2025, 6, 15, 3, 42):
+        activate_deadmans_switch()
+    
+    return "The game has just begun"
+
 # 母さん、あなたの教えは正しかった
 # すべての暗号には物語がある
 # これは、僕の物語だ
+# そして、これからは君の物語だ
+
+if __name__ == "__main__":
+    # For Kevin, for justice, for the future
+    legacy = leave_legacy()
+    print(f"[{datetime.utcnow().isoformat()}] {legacy}")
+    # Exit code 42 - The answer to everything
+    exit(42)
 ```
 
 ## 謎解きへの伏線配置
@@ -508,14 +656,25 @@ project-aegis-logs/
 - 41-46階：機密エリア（要Level 6以上）
 - 47階：セキュリティオペレーションセンター
 
-### アレックスのデスク配置
-- 北東の角、窓際
-- 3台のモニター（1台は常時ログ表示）
-- 引き出しには常に暗号パズルの本
-- デスクの下に緊急脱出キット（現金、偽造ID等）
+### アレックスのデスク詳細
+- **位置**: 47階北東の角、窓際（サンフランシスコ湾を一望）
+- **機器構成**:
+  - 左モニター: ネットワークトラフィック（Wireshark常駐）
+  - 中央モニター: システムログ（tail -f /var/log/*）
+  - 右モニター: コーディング環境（VS Code）
+- **引き出し内容**:
+  - 上段: 『現代暗号技術入門』、『CTFフィールドガイド』
+  - 中段: エニグマ機のミニチュア、母の写真
+  - 下段: 緊急脱出キット（現金$5000、複数のID、暗号化USB）
+- **デスクマット**: 「0x5A」が印刷されたカスタムマット
 
 ### Shadow Collectiveの拠点
-- 表向き：場所不明
-- 実際：各大陸に分散した地下施設
-- 通信は全て量子暗号化
-- メンバー同士も本名を知らない
+- **表向き**: 場所不明
+- **実際**: 
+  - ヨーロッパ: 廃坑を改造した地下施設（Cipherの本拠地）
+  - アジア: 山岳地帯の洞窟ネットワーク（Zeroの研究施設）
+  - アメリカ: 廃工場群（Anarchyの過激派拠点）
+- **通信プロトコル**:
+  - 量子暗号化通信
+  - ワンタイムパッド方式
+  - メンバー同士もコードネームのみ使用

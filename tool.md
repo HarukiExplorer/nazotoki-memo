@@ -5,15 +5,33 @@
 ### IPアドレス
 - **活用方法**: 特定のIPアドレスにアクセスすると次のヒントが表示される
 - **実装例**: 
-  - 実際に存在するIPアドレスを使用（IPアドレスとサーバは用意）
-  - IPv6アドレスに暗号を埋め込む
+  - IPv4: `10.47.7.13` (Project Aegisの内部ネットワーク)
+  - IPv6に暗号を埋め込む: `2001:db8:85a3::8a2e:370:7334`
+  - 各オクテットがASCIIコード: `65.76.69.88` → "ALEX"
+- **謎解きのヒント**:
+  ```bash
+  # IPから情報を取得
+  curl http://10.47.7.13:31337/hint
+  nmap -sV -p- 10.47.7.13
+  ```
 
 ### ドメイン名
 - **活用方法**: 
-  - サブドメインに情報を隠す（hint.projectaegis.example.com）
+  - サブドメインに情報を隠す
   - DNS TXTレコードにメッセージを設定
   - WHOISデータに架空の情報を含める
-- **実装例**: `dig TXT secret.example.com`で暗号化されたメッセージを取得
+- **実装例**: 
+  ```bash
+  # TXTレコードに暗号を設定
+  dig TXT protocol-seven.projectaegis.com
+  # "v=spf1 include:_spf.google.com ~all" 
+  # "hint=VGhlIHRydXRoIGlzIGRpc3RyaWJ1dGVk"
+  
+  # サブドメインパターン
+  shadow.projectaegis.com
+  collective.projectaegis.com
+  seven.projectaegis.com  # 7番目が重要
+  ```
 
 ### ポート番号
 - **活用方法**: 
@@ -30,10 +48,30 @@
 
 ### HTTPヘッダー
 - **活用方法**:
-  - カスタムヘッダー（X-Secret-Message）
+  - カスタムヘッダーに情報を埋め込む
   - User-Agentに特定の文字列が必要
   - Cookieに暗号化されたデータ
-- **実装例**: `curl -H "X-Project-Aegis: true" https://example.com`
+- **実装例**: 
+  ```bash
+  # 基本的な例
+  curl -H "X-Project-Aegis: true" \
+       -H "X-Shadow-Collective: false" \
+       -H "X-Protocol: Seven" \
+       https://api.example.com/secret
+  
+  # User-Agentで認証
+  curl -A "Mozilla/5.0 (Aegis; Guardian)" https://example.com
+  
+  # Cookieに暗号
+  curl -b "session=YWxleGNoZW46cHJvdG9jb2xzZXZlbg==" \
+       https://example.com/dashboard
+  ```
+- **レスポンスヘッダーの確認**:
+  ```bash
+  curl -I https://example.com | grep "X-"
+  # X-Hint: Check commit a7b3c9d
+  # X-Next-Step: /api/v2/protocol
+  ```
 
 ### WebSocket
 - **活用方法**: リアルタイムで変化するメッセージ
@@ -81,7 +119,27 @@
   - 多層QRコード（QRコード内にQRコード）
   - エラー訂正レベルを利用したデータ隠蔽
   - 動的QRコード（時間で変化）
-- **実装ツール**: qrencode, zbarimg
+- **実装ツール**: 
+  ```bash
+  # QRコード生成
+  qrencode -o hint.png "Protocol Seven Activated"
+  
+  # QRコード読み取り
+  zbarimg secret_qr.png
+  # QR-Code:https://github.com/alexchen/keys
+  
+  # 多層QRコードの作成
+  # 1. 最終メッセージをQR化
+  qrencode -o level2.png "The truth is distributed"
+  # 2. level2.pngのURLをQR化
+  qrencode -o level1.png "https://example.com/level2.png"
+  ```
+- **エラー訂正レベルの活用**:
+  ```python
+  # エラー訂正レベルH(30%)でも読めるように
+  # QRコードの一部を意図的に破損させて
+  # 隠しメッセージを埋め込む
+  ```
 
 ### バーコード
 - **活用方法**:
@@ -96,7 +154,32 @@
   - ブランチ名
   - Issue番号
   - Gistに隠されたコード
-- **実装例**: 特定のコミットハッシュが次のヒント
+- **実装例**: 
+  ```bash
+  # コミットメッセージから抽出
+  git log --grep="Protocol" --oneline
+  # a7b3c9d Fix Protocol Seven initialization
+  
+  # 特定のコミットの詳細
+  git show a7b3c9d --format=fuller
+  
+  # ブランチ名にヒント
+  git branch -a | grep -E "shadow|seven|aegis"
+  # feature/shadow-collective
+  # hotfix/protocol-seven
+  
+  # Issue番号パターン
+  # Issue #13, #37, #73 (素数のパターン)
+  
+  # GitHub APIを使用
+  curl https://api.github.com/repos/alexchen/project-aegis/commits/a7b3c9d
+  ```
+- **隠しファイル**:
+  ```bash
+  # .gitignoreされたファイルを確認
+  git ls-files --others --ignored --exclude-standard
+  # secret_key.txt
+  ```
 
 ### Twitter/X
 - **活用方法**:
@@ -142,6 +225,30 @@
   - Unix時間を暗号の一部に
   - 特定の時刻にのみアクセス可能
   - タイムゾーンの違いを利用
+- **実装例**:
+  ```bash
+  # Unixタイムスタンプの活用
+  # 2025-06-15 03:42:00 UTC = 1750041720
+  echo "1750041720" | base64
+  
+  # 時限式アクセス
+  current_time=$(date +%s)
+  target_time=1750041720
+  if [ $current_time -ge $target_time ]; then
+    echo "Protocol Seven key: $(cat secret.key)"
+  else
+    echo "Not yet. Wait $(($target_time - $current_time)) seconds."
+  fi
+  
+  # タイムゾーンのヒント
+  # PST: -8, EST: -5, UTC: 0, JST: +9
+  # 例: 03:42 UTC = 19:42 PST (前日) = 12:42 JST
+  ```
+- **Cron形式の活用**:
+  ```bash
+  # 毎日午03:42にのみアクセス可能
+  # 42 3 * * * /path/to/reveal_secret.sh
+  ```
 
 ### スケジュール
 - **活用方法**:
@@ -176,7 +283,29 @@
 
 ## 実装時の注意事項
 
-1. **倫理的配慮**: 実在のサービスや個人情報を使用しない
-2. **コスト**: 有料サービスの使用は最小限に
-3. **メンテナンス**: 外部サービスに依存しすぎない設計
-4. **セキュリティ**: 参加者のシステムに悪影響を与えない
+1. **倫理的配慮**: 
+   - 実在のサービスや個人情報を使用しない
+   - ダミーのドメインやIPアドレスを使用
+   - 法的に問題のない範囲で実装
+
+2. **コスト**: 
+   - 無料サービスを優先的に使用
+   - GitHub Pages、Cloudflare Workersなど
+   - 有料APIは必要最小限に
+
+3. **メンテナンス**: 
+   - 外部サービスが停止しても謎が解けるように
+   - バックアッププランを用意
+   - ドキュメント化を徹底
+
+4. **セキュリティ**: 
+   - 参加者のシステムに悪影響を与えない
+   - サンドボックス環境を提供
+   - 明確な利用規約を設定
+
+5. **難易度調整**:
+   ```
+   初級: DNS TXTレコード → Base64 → メッセージ
+   中級: GitHub API → ステガノグラフィー → XOR
+   上級: 時限式 + 地理的要素 + 複数レイヤー
+   ```

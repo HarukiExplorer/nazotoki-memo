@@ -1,5 +1,48 @@
 # ストーリー
 
+## プロローグ前夜：創造者の告白
+
+### 2019年11月23日 23:47 UTC - Project Aegis 地下研究施設
+
+私には名前がある。しかし、もうその名前で呼ばれることはないだろう。
+
+コードネーム「Architect」。Protocol Sevenの設計者。そして、世界を救うために世界を裏切った者。
+
+今夜、私は人類史上最も危険なシステムを完成させた。7つの層からなる究極のバックドア。表向きは、サイバー攻撃から世界を守る最終防衛システム。しかし、その真の姿は...
+
+```python
+# protocol_seven_core.py
+# Last modified: 2019-11-23 23:47:13 UTC
+# Author: [REDACTED]
+
+class ProtocolSeven:
+    """
+    The ultimate paradox:
+    A weapon to end all weapons.
+    A key to lock all doors.
+    A truth hidden in lies.
+    """
+    
+    def __init__(self):
+        self.layers = self._initialize_layers()
+        self.conscience = self._embed_conscience()
+        self.hope = self._plant_seeds_of_change()
+```
+
+私は知っている。いつか、誰かがこのシステムの真実を発見することを。その人物こそが、私が待ち望んでいた「後継者」だ。
+
+6年後、その人物の名前はアレックス・チェンという。
+
+私は彼を知らない。彼も私を知らない。しかし、運命の糸は既に紡がれている。
+
+「すべての鍵には物語がある」
+
+この言葉を理解する者だけが、Protocol Sevenの真の制御権を手にすることができる。
+
+私は影に消える。しかし、私の意志は、コードの中に永遠に生き続ける。
+
+-- The Architect
+
 ## プロローグ
 2025年6月15日 03:42 UTC
 
@@ -20,6 +63,12 @@ Project Aegisのセキュリティエンジニアとして働いていた。
 
 頼む、真実を見つけてくれ。
 そして、Project Aegisを守ってくれ。
+
+```
+# Hidden message in commit
+# git log --format="%H %s" | grep -E "^[a-f0-9]{7}" | cut -c1-7
+# The first 7 characters tell a story
+```
 
 -- A.C.
 
@@ -75,22 +124,77 @@ Pattern: Irregular data exfiltration - TCP port 443
 Volume: 0.3% above baseline (347.2 KB/s avg)
 Confidence: 67.3%
 Recommendation: Manual review suggested
+
+[ADDITIONAL METRICS]
+Packet Inter-Arrival Time: Fibonacci sequence detected (1, 1, 2, 3, 5, 8...)
+TLS Certificate Fingerprint: f4:c9:b7:13:37:42:69:ac:e5:d1:8f:7e:3d:0a:47
+Destination: 185.199.108.153 (GitHub Pages CDN)
 ```
 
 「0.3%か... 統計的誤差の範囲内だな」
 
 普通のエンジニアならそう判断して次に進むところだ。しかし、アレックスは違った。母親から受け継いだ暗号学者の本能が、この微細な変化の中に隠された意味を感じ取っていた。
 
-彼はWiresharkを起動し、カスタムフィルターを適用してデータストリームを詳細に分析し始めた。指が機械的な正確さでキーボードの上を踊る。画面には無数の16進数が流れ、その中に潜む異常なパターンを彼の訓練された目が追った。
+「フィボナッチ数列... パケットの到着間隔が？」
+
+彼の指が素早くキーボードを叩く。新しいターミナルウィンドウが次々と開かれていく。
 
 ```bash
 $ tcpdump -i eth0 -w capture_$(date +%Y%m%d_%H%M%S).pcap 'port 443 and net 10.47.0.0/16'
-$ wireshark -r capture_20250612_023500.pcap -Y 'ssl.handshake.type == 1'
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+$ tshark -r capture_20250612_023500.pcap -T fields -e frame.time_delta | head -20
+0.000000000
+0.001000000   # 1ms
+0.001000000   # 1ms  
+0.002000000   # 2ms
+0.003000000   # 3ms
+0.005000000   # 5ms
+0.008000000   # 8ms
+0.013000000   # 13ms - Fibonacci!
+
+$ wireshark -r capture_20250612_023500.pcap -Y 'ssl.handshake.type == 1' -T fields -e ssl.handshake.extensions_server_name
+alexchen-security.github.io
+project-aegis-logs.github.io
+protocol-seven-key.github.io   # What?!
 ```
 
 「待てよ... このパターンは...」
 
-アレックスは、データの中に巧妙に隠されたステガノグラフィーの痕跡を発見した。誰かが、通常のトラフィックに紛れて、秘密のデータを外部に送信している。
+アレックスは、データの中に巧妙に隠されたステガノグラフィーの痕跡を発見した。誰かが、通常のトラフィックに紛れて、秘密のデータを外部に送信している。しかも、パケットの到着間隔自体がメッセージの一部になっている。
+
+```python
+# quick_analysis.py
+import pyshark
+import numpy as np
+
+cap = pyshark.FileCapture('capture_20250612_023500.pcap')
+deltas = []
+for packet in cap:
+    if hasattr(packet, 'frame_info'):
+        deltas.append(float(packet.frame_info.time_delta))
+
+# Check if it's really Fibonacci
+fib = [1, 1]
+for i in range(2, 20):
+    fib.append(fib[-1] + fib[-2])
+    
+normalized_deltas = [int(d * 1000) for d in deltas[:20]]  # Convert to ms
+print(f"Packet deltas: {normalized_deltas}")
+print(f"Fibonacci seq: {fib[:20]}")
+print(f"Match: {normalized_deltas[:8] == fib[:8]}")  # True!
+
+# Extract hidden message from packet payloads at Fibonacci positions
+message = ""
+for i in fib[:10]:
+    if i < len(cap):
+        packet = cap[i]
+        if hasattr(packet, 'data'):
+            # First byte of each packet at Fibonacci position
+            message += chr(packet.data.data[0])
+            
+print(f"Hidden message: {message}")  # Output: "SEVEN LIES"
+```
 
 30分後、彼の顔は青ざめていた。
 
@@ -259,15 +363,100 @@ Shadow Collective内部に、この「均衡」を拒否する過激派が台頭
 
 ### 20:45 UTC - 襲撃
 
-突然、モーテルの廊下から足音が聞こえてきた。規則正しい、訓練された者の歩き方。アレックスは即座にノートPCを閉じ、窓に向かった。
+#### 20:30 - 静寂の前触れ
 
-ドアが蹴破られる瞬間、彼は窓から飛び出した。2階からの落下。足首に激痛が走るが、アドレナリンがそれを押し殺す。
+モーテルの薄汚れた部屋。壁紙は黄ばみ、エアコンは断続的にカタカタと音を立てていた。アレックスは疲労困憊していたが、警戒を解くことはできなかった。
 
-「Target escaping! North side!」
+隣室から聞こえていたテレビの音 - 地元のニュース番組のジングル、CMの陽気な音楽 - が、突然途絶えた。まるで世界から音が消えたかのような、不自然な静寂。
 
-背後から怒号が聞こえる。アレックスは痛む足を引きずりながら、あらかじめ確認しておいた逃走ルートを走った。
+アレックスの首筋に冷たい汗が浮かぶ。彼は本能的にノートPCのキーボードから手を離し、部屋の明かりを消した。
 
-追手は、Project Aegisの部隊か、それともShadow Collectiveか。どちらにしても、捕まれば命はない。アレックスは歯を食いしばり、闇に紛れて逃げ続けた。
+#### 20:35 - 包囲確認
+
+カーテンの隙間から外を覗く。駐車場に3台の黒いSUV。エンジンは切られているが、フロントガラスに反射する街灯の光が、中に人影があることを物語っていた。
+
+```
+[TACTICAL ASSESSMENT]
+Vehicles: 3 black SUVs (Chevrolet Suburban, likely armored)
+Positions: Triangle formation, all exits covered
+Personnel: Minimum 12 operatives (4 per vehicle)
+Escape routes: 
+  - North: Blocked by SUV-1
+  - South: Blocked by SUV-2  
+  - East: Forest (300m to tree line)
+  - West: Highway (too exposed)
+Recommendation: East through window, despite 2nd floor drop
+```
+
+#### 20:40 - 最後の準備
+
+アレックスは素早く動いた。ノートPCに仕込んだ自動削除スクリプトを起動。
+
+```bash
+#!/bin/bash
+# deadman.sh - If I don't make it
+sleep 300  # 5 minutes delay
+shred -vfz -n 10 /dev/sda*
+dd if=/dev/urandom of=/dev/sda bs=1M
+echo "The truth is distributed, never centralized" | \
+  curl -X POST https://api.example.com/final_message
+```
+
+彼は母親の写真を胸ポケットに入れ、ケビンとの写真をもう一度見つめた。
+
+「すまない、ケビン。君の仇は討てなかった」
+
+#### 20:43 - 接近
+
+廊下から足音。一人、二人... いや、少なくとも6人。足音のリズムが完璧に同期している。軍事訓練を受けた者たちだ。
+
+ドアノブがゆっくりと回る音。施錠されていることを確認すると、足音が一旦止まった。
+
+無線の音が微かに聞こえる。「Breach in 3... 2...」
+
+#### 20:45 - 脱出
+
+爆音と共にドアが吹き飛んだ。破片が部屋中に飛び散る。同時に、アレックスは助走をつけて窓に向かった。
+
+ガラスが砕ける音。鋭い破片が頬を切り裂く。一瞬の浮遊感。そして...
+
+```
+[INJURY REPORT]
+Fall distance: 7.3 meters
+Impact: Left ankle, possible fracture
+Lacerations: Face (3), arms (5), minor
+Blood loss: Minimal
+Mobility: 60% capacity
+Adrenaline surge: Active
+```
+
+地面との衝突。左足首に稲妻のような激痛が走る。しかし、立ち止まっている暇はない。
+
+「Target escaping! East into the woods! Converge on grid reference 7-Alpha!」
+
+赤いレーザーサイトが周囲の地面を這い回る。アレックスは痛みを押し殺し、森に向かって走り出した。木々の間から、ヘリコプターのローター音が近づいてくる。
+
+#### 20:48 - 観察者
+
+500メートル離れた丘の上。一人の人物が高性能双眼鏡で一部始終を観察していた。
+
+「Phase 4、開始確認。アレックス・チェンは東の森へ。Project Aegisの追跡チームが展開中。Shadow Collectiveの過激派も同じエリアに向かっています」
+
+通信相手の声が応答する。「了解、Ghost。監視を継続せよ。彼がどちらに捕まるかで、今後の展開が大きく変わる」
+
+Ghostは双眼鏡を下ろし、タブレットで戦術マップを確認した。
+
+```
+[TACTICAL MAP - REAL TIME]
+◆ Alex Chen: Moving E at 12 km/h (injured)
+▲ Aegis Team Alpha: 200m behind, closing
+▲ Aegis Team Bravo: Flanking from N
+● Shadow Collective (Anarchy): Approaching from SE
+◇ Extraction Point: 2.3 km E (forest clearing)
+※ Collision probability: 87% in next 15 minutes
+```
+
+「面白くなってきた」Ghostは呟いた。「さあ、アレックス・チェン。君はどんな選択をする？」
 
 ### 2025年6月13日 03:00 UTC - 地下に潜る
 
@@ -423,21 +612,107 @@ Enterキーを押す瞬間、アレックスは深く息を吸った。これで
 
 ### 03:42 UTC - 遺言
 
+アレックスの指は震えていた。疲労、恐怖、そして使命の重さに。しかし、彼の心は澄み切っていた。
+
+```
+[SYSTEM STATUS]
+Battery: 7%
+Network: Anonymous VPN (3 hops)
+Encryption: AES-256-GCM + ChaCha20-Poly1305
+Time remaining: Unknown
+Last commit: a7b3c9d "The truth lies in seven fragments"
+```
+
 「これを読んでいるということは、私はもうこの世にいないか、あるいは彼らの手に落ちたということだ...」
 
-アレックスは、心を込めて最後のメッセージを綴った。それは、次なる守護者への託された希望であり、Project Aegisを真に守るための指針でもあった。
+彼は最後のメッセージを慎重に構成した。単なる遺言ではない。これは、パズルの最初のピースだった。
 
-送信ボタンを押した瞬間、倉庫のドアが破られた。金属が引き裂かれる耳障りな音。赤いレーザーサイトがアレックスの胸を照らす。その光が作る小さな赤い点が、まるで心臓を狙い澄ました狙撃手のように揺れながら、ゆっくりと彼の体の中心に収斂していく。
+```python
+# final_message.py
+# To those who seek the truth
 
-「アレックス・チェン、投降しろ！」
+import time
+import hashlib
+from datetime import datetime
 
-声の主が、Project Aegisの部隊なのか、Shadow Collectiveなのか、アレックスにはもはやどうでもよかった。彼の使命は完了した。真実は守られた。
+class FinalMessage:
+    def __init__(self):
+        self.timestamp = "2025-06-15T03:42:00Z"
+        self.author = "A.C."
+        self.hope = float('inf')
+        
+    def encode_truth(self):
+        """
+        Seven layers, seven keys, seven choices.
+        The first key is always the simplest.
+        Look where I began, not where I ended.
+        """
+        
+        # Hint 1: Check my first commit
+        first_hint = "git log --reverse | head -1"
+        
+        # Hint 2: The mother's wisdom
+        second_hint = "Every cipher has a story"
+        
+        # Hint 3: Protocol Seven's weakness
+        third_hint = "Even perfection has flaws by design"
+        
+        return self._distribute_fragments()
+```
 
-アレックスは、両手を挙げながら、かすかに微笑んだ。
+送信ボタンにカーソルを合わせる。一度送信すれば、もう後戻りはできない。
+
+外から、エンジン音が近づいてくる。複数の車両。時間切れだ。
+
+「母さん、あなたの教えは正しかった。すべての暗号には物語がある」
+
+[ENTER]
+
+メッセージは量子もつれのように、インターネットの深淵へと拡散していく。GitHub、IPFS、ブロックチェーン、そして誰も知らない場所へ。
+
+倉庫のドアが爆破された。金属片が飛び散り、煙が充満する。赤いレーザーサイトが煙の中を切り裂く。
+
+「アレックス・チェン！ 武器を捨てて投降しろ！」
+
+複数の声が重なる。Project Aegisの部隊と、Shadow Collectiveの過激派。両方が同時に到着したようだ。
+
+アレックスは立ち上がり、両手を挙げた。ノートPCは自動削除プログラムにより、既に完全に消去されている。しかし、彼の顔には穏やかな笑みが浮かんでいた。
 
 「The game has just begun...」
 
-彼の最後の言葉は、倉庫の闇に吸い込まれていった。
+その瞬間、何かが起きた。
+
+倉庫の電源が突然落ち、完全な闇が訪れた。そして、どこからともなく声が響いた。
+
+「Protocol Seven, Emergency Override Activated. All units stand down.」
+
+混乱の中、アレックスの姿は闇に消えた。
+
+#### 03:47 UTC - 観察記録の終わり
+
+Ghostは双眼鏡を下ろした。
+
+「興味深い結末だ。アレックス・チェンの生死は確認できず。しかし、彼のメッセージは既に拡散を始めている」
+
+通信相手 - Zeroの声が応答する。
+
+「Phase 5の準備を開始しろ。真のゲームは、これから始まる」
+
+Ghostはタブレットに最後の記録を入力した。
+
+```
+[FINAL OBSERVATION LOG]
+Subject: Alex Chen
+Status: Unknown (Presumed captured/deceased)
+Mission: Complete
+Legacy: Active and propagating
+Threat Level: Paradoxically increased
+Recommendation: Monitor all channels for puzzle solvers
+
+Note: The Architect's prophecy may be fulfilling itself.
+"Every key has a story, every story has an ending,
+but some endings are just new beginnings."
+```
 
 ### エピローグのための伏線
 
@@ -459,11 +734,44 @@ Zeroは静かに通信デバイスを起動した。
 
 アレックス・チェンの物語は終わった。しかし、彼が始めた「ゲーム」は、今まさに始まろうとしている。
 
+## 幕間：The Architectの正体
+
+### 2025年6月15日 04:00 UTC - どこかの地下施設
+
+薄暗い部屋で、一人の人物がモニターを見つめていた。画面には、アレックスが送信した最後のメッセージが表示されている。
+
+「よくやった、アレックス・チェン」
+
+その人物の顔は影に隠れているが、声には深い満足感が滲んでいた。
+
+「私の後継者よ、君は期待通りの働きをしてくれた」
+
+デスクの上には、古い写真が一枚。若き日のアレックスの母親と、もう一人の人物が写っている。写真の裏には手書きのメッセージ。
+
+「To my dearest friend and colleague,
+May our children inherit a better world.
+- M.L. 1995」
+
+そう、The Architectの正体は...
+
 ## エピローグ：選択
 
 ### 謎を解いた者へ
 
 もしあなたがこれを読んでいるなら、アレックス・チェンが残したすべての謎を解いたということだ。おめでとう。そして、ご愁傷様。なぜなら、あなたは今、人類の未来を左右する選択を迫られているからだ。
+
+```
+[PUZZLE SOLVER DETECTED]
+Access Level: OMEGA
+Time Elapsed: [CALCULATING...]
+Puzzles Solved: 7/7
+Truth Fragments: 100%
+Ethical Gates: PASSED
+Humanity Test: VERIFIED
+
+You have proven worthy.
+The final door is now open.
+```
 
 アレックスが命を賭けて守った真実。Project AegisとShadow Collectiveの隠された関係。そして、世界のデジタルインフラを一瞬で支配できるProtocol Seven。
 
@@ -492,6 +800,48 @@ Zeroは静かに通信デバイスを起動した。
 どの道を選んでも、アレックスはあなたに「ツール」を残している。彼が構築したシステムの一部は、実は高度な防御メカニズムとしても機能する。それを使えば、Protocol Sevenの脅威を無力化できる。
 
 ただし、そのツールを起動するには、あなたの選択を入力する必要がある。システムは、あなたの決断に応じて、最適な支援を提供するようプログラムされている。
+
+```python
+# decision_engine.py
+# Your choice matters
+
+import os
+import sys
+from pathlib import Path
+
+def activate_legacy_tool(choice):
+    """
+    Three paths, three tools, one destiny.
+    
+    Args:
+        choice (str): 'expose' | 'maintain' | 'transcend'
+    """
+    
+    if choice == 'expose':
+        # Tool: Truth Disseminator
+        # Spreads the evidence across all major media platforms
+        # Includes dead man's switch for protection
+        return TruthDisseminator()
+        
+    elif choice == 'maintain':
+        # Tool: Shadow Guardian
+        # Infiltrates both organizations from within
+        # Provides covert support for reform
+        return ShadowGuardian()
+        
+    elif choice == 'transcend':
+        # Tool: Digital Knight Protocol
+        # Creates distributed network of ethical hackers
+        # Operates independently of all organizations
+        return DigitalKnightProtocol()
+        
+    else:
+        # Easter egg: The fourth option
+        if choice == 'architect':
+            return reveal_ultimate_truth()
+
+# The system awaits your input...
+```
 
 ### 時は来た
 
@@ -582,4 +932,48 @@ Shadow CollectiveのZero。彼もまた、この新しい道を密かに支援�
 
 "The game never ends. It only evolves."
 
+### 最終ヒント：The Architectからのメッセージ
+
+すべての謎を解いた者へ、最後のヒントを贈ろう。
+
+```
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+To the one who follows in Alex's footsteps,
+
+You have come far, but the journey is not over.
+The seven layers of Protocol Seven each contain a name.
+These names, when combined, reveal the true identity of The Architect.
+
+Layer 1: Network - "M"
+Layer 2: Protocol - "I"
+Layer 3: Application - "C"
+Layer 4: Data - "H"
+Layer 5: Hardware - "A"
+Layer 6: Human - "E"
+Layer 7: Quantum - "L"
+
+Rearrange these letters, and you will understand everything.
+The mother's wisdom was not just a metaphor.
+
+Remember: Every cipher has a story,
+And sometimes, the storyteller is part of the cipher.
+
+-- The Architect
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22
+
+iQEcBAEBCAAGBQJmPx42AAoJEL+7+3cyALexVZIH/0rN5ZpL...
+-----END PGP SIGNATURE-----
+```
+
 -- End of Story --
+
+```python
+# But is it really the end?
+# Or just another beginning?
+# The game continues at: github.com/[REDACTED]/phase-five
+# Password: The Architect's real name
+```

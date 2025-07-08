@@ -678,3 +678,7 @@ project-aegis-logs/
   - 量子暗号化通信
   - ワンタイムパッド方式
   - メンバー同士もコードネームのみ使用
+---
+
+## ブラッシュアップ自己評価
+詳細は[self-evaluation.md](./self-evaluation.md)を参照。
